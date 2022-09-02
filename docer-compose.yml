@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  mongo:
+    image: mongo:4.4
+    volumes:
+      - ${NS_MONGO_DATA_DIR:-./mongo-data}:/data/db:cached
+
+  nightscout:
+    image: nightscout/cgm-remote-monitor:latest
+    container_name: nightscout
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: production
+      TZ: Europe/Moscow
+
+      INSECURE_USE_HTTP: 'true'
+
+      MONGO_CONNECTION: mongodb://mongo:27017/nightscout
+
+      BASAL_RENDER=icicle
+      AUTH_DEFAULT_ROLES=denied
+      SHOW_FORECAST=openaps
+      BG_HIGH=13
+      SHOW_PLUGINS=careportal rawbg iob maker bridge cob bwp cage basal treatmentnotify basal visualization on the graph pushover temp basal visualization exercise entry visualization new scaling options reports admin tools minimed connect and nightscout
+      DISPLAY_UNITS=mmol
+      SHOW_RAWBG=never
+      API_SECRET=11111111111
+      MONGO_CONNECTION=mongodb://mongo:27017/nightscout
+      BG_TARGET_BOTTOM=4.3
+      NODE_ENV=production
+      THEME=colors
+      BOLUS_RENDER_OVER=1
+      BG_TARGET_TOP=9
+      BG_LOW=4
+      TZ=Europe/Moscow
+      TIME_FORMAT=24
+      LANGUAGE=ru
+      SCALE_Y=linear
+      ENABLE=careportal boluscalc food bwp cage sage iage iob cob basal ar2 rawbg pushover bgi pump openaps alice
+      INSECURE_USE_HTTP=true
+      DEVICESTATUS_ADVANCED=true
+      PUMP_WARN_BATT_P=51
+      PUMP_URGENT_BATT_P=26
+      PUMP_FIELDS=reservoir battery clock status
+
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
